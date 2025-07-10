@@ -13,27 +13,21 @@ import {TickMath} from "@uniswap/v4-core/src/libraries/TickMath.sol";
 import {BaseScript} from "./base/BaseScript.s.sol";
 import {LiquidityHelpers} from "./base/LiquidityHelpers.s.sol";
 
-contract CreatePoolAndAddLiquidityScript is BaseScript, LiquidityHelpers {
+contract AddLiquidity is BaseScript, LiquidityHelpers {
     using CurrencyLibrary for Currency;
 
-    /////////////////////////////////////
-    // --- Configure These ---
-    /////////////////////////////////////
+    int24 tickSpacing = 1;
+    uint160 startingPrice = 2 ** 96;
 
-    uint24 lpFee = 5000; // 0.50%
-    int24 tickSpacing = 100;
-    uint160 startingPrice = 2 ** 96; // Starting price, sqrtPriceX96; floor(sqrt(1) * 2^96)
+    uint256 public token0Amount = 50e6;   // 50 USDC
+    uint256 public token1Amount = 50e18;  // 50 MUSD
 
-    // --- liquidity position configuration --- //
-    uint256 public token0Amount = 1e18;
-    uint256 public token1Amount = 1e18;
-
-    // range of the position, must be a multiple of tickSpacing
     int24 tickLower;
     int24 tickUpper;
-    /////////////////////////////////////
 
     function run() external {
+        console2.log("=== Adding Liquidity to Existing Pool ===");
+        
         PoolKey memory poolKey = PoolKey({
             currency0: currency0,
             currency1: currency1,
@@ -42,14 +36,12 @@ contract CreatePoolAndAddLiquidityScript is BaseScript, LiquidityHelpers {
             hooks: hookContract
         });
 
-        bytes memory hookData = new bytes(0);
-
+        // Calculate ticks
         int24 currentTick = TickMath.getTickAtSqrtPrice(startingPrice);
+        tickLower = ((currentTick - 5000 * tickSpacing) / tickSpacing) * tickSpacing;
+        tickUpper = ((currentTick + 5000 * tickSpacing) / tickSpacing) * tickSpacing;
 
-        tickLower = ((currentTick - 750 * tickSpacing) / tickSpacing) * tickSpacing;
-        tickUpper = ((currentTick + 750 * tickSpacing) / tickSpacing) * tickSpacing;
-
-        // Converts token amounts to liquidity units
+        // Prepare liquidity params
         uint128 liquidity = LiquidityAmounts.getLiquidityForAmounts(
             startingPrice,
             TickMath.getSqrtPriceAtTick(tickLower),
@@ -58,33 +50,28 @@ contract CreatePoolAndAddLiquidityScript is BaseScript, LiquidityHelpers {
             token1Amount
         );
 
-        // slippage limits
         uint256 amount0Max = token0Amount + 1;
         uint256 amount1Max = token1Amount + 1;
+        bytes memory hookData = new bytes(0);
 
         (bytes memory actions, bytes[] memory mintParams) = _mintLiquidityParams(
             poolKey, tickLower, tickUpper, liquidity, amount0Max, amount1Max, deployerAddress, hookData
         );
 
-        // multicall parameters
-        bytes[] memory params = new bytes[](2);
-
-        // Initialize Pool
-        params[0] = abi.encodeWithSelector(positionManager.initializePool.selector, poolKey, startingPrice, hookData);
-
-        // Mint Liquidity
-        params[1] = abi.encodeWithSelector(
-            positionManager.modifyLiquidities.selector, abi.encode(actions, mintParams), block.timestamp + 3600
-        );
-
-        // If the pool is an ETH pair, native tokens are to be transferred
-        uint256 valueToPass = currency0.isAddressZero() ? amount0Max : 0;
-
+        console2.log("=== Executing Liquidity Addition ===");
+        
         vm.startBroadcast();
+        
         tokenApprovals();
-
-        // Multicall to atomically create pool & add liquidity
-        positionManager.multicall{value: valueToPass}(params);
+        
+        // Only add liquidity (no pool initialization)
+        positionManager.modifyLiquidities(
+            abi.encode(actions, mintParams), 
+            block.timestamp + 3600
+        );
+        
+        console2.log(unicode"✅ Liquidity added successfully!");
+        
         vm.stopBroadcast();
     }
 }

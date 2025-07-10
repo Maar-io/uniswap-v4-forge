@@ -1,0 +1,48 @@
+# Set environment variables
+export WALLET_USER=0x911d82b108804A18022d0A2621B2Fc608DEF6FCA
+export BASESEP_MUSD_CONTRACT=0xCb8734448Bd46dd307c24F434180b0f2a6Df31f2
+export BASESEP_USDC_CONTRACT=0x036CbD53842c5426634e7929541eC2318f3dCF7e
+export BASESEP_PERMIT2_CONTRACT=0x000000000022D473030F116dDEE9F6B43aC78BA3
+export BASESEP_RPC=https://base-sepolia-rpc.publicnode.com
+export BASESEP_POOL_MANAGER=0x05E73354cFDd6745C338b50BcFDfA3Aa6fA03408
+export BASESEP_POSITION_MANAGER=0x4B2C77d209D3405F41a037Ec6c77F7F5b8e2ca80
+export BASESEP_STATE_VIEW=0x571291b572ed32ce6751a2Cb2486EbEe8DEfB9B4
+export BASESEP_POOL_ID=0xC118CF4590C1DA5EB44904B582D76DBF28D65F09BAE29D7079E71CE047466B06
+
+# Cast call to check Permit2 allowance for MUSD
+echo "\nMUSD Permit2 Allowance for $WALLET_USER:" && ALLOWANCE=$(cast call $BASESEP_MUSD_CONTRACT "allowance(address,address)(uint256)" $WALLET_USER $BASESEP_PERMIT2_CONTRACT --rpc-url $BASESEP_RPC) && echo "Raw Wei: $ALLOWANCE" && echo "Formatted: $(cast from-wei ${ALLOWANCE%% *}) MUSD"
+
+# Cast call to check Permit2 allowance for USDC (6 decimals)
+echo "\nUSDC Permit2 Allowance for $WALLET_USER:" && ALLOWANCE=$(cast call $BASESEP_USDC_CONTRACT "allowance(address,address)(uint256)" $WALLET_USER $BASESEP_PERMIT2_CONTRACT --rpc-url $BASESEP_RPC) && echo "Raw Units: $ALLOWANCE" && echo "Formatted: $(cast format-units ${ALLOWANCE%% *} 6) USDC"
+
+# Cast call to balanceOf positions in PositionManager
+echo "\nPositionManager Balance for $WALLET_USER:" && BALANCE=$(cast call $BASESEP_POSITION_MANAGER "balanceOf(address)" $WALLET_USER --rpc-url $BASESEP_RPC) && echo "NFT Count: $BALANCE" 
+
+# State View for Pool
+echo "\nState View Liquidity for $BASESEP_POOL_ID:" && LIQUIDITY=$(cast call $BASESEP_STATE_VIEW "getLiquidity(bytes32)" $BASESEP_POOL_ID --rpc-url $BASESEP_RPC) && echo "Liquidity (hex): $LIQUIDITY" && echo "Liquidity (decimal): $(cast to-dec $LIQUIDITY)" 
+
+cast call $BASESEP_STATE_VIEW "getSlot0(bytes32)" $BASESEP_POOL_ID --rpc-url $BASESEP_RPC | jq -Rr --arg poolid "$BASESEP_POOL_ID" '
+  . as $hex |
+  ($hex | ltrimstr("0x")) as $clean |
+  {
+    "poolId": $poolid,
+    "raw": $hex,
+    "sqrtPriceX96_hex": ("0x" + $clean[0:64]),
+    "tick_hex": ("0x" + $clean[64:112]),
+    "protocolFee_hex": ("0x" + $clean[112:128]),
+    "lpFee_hex": ("0x" + $clean[(-6):]),
+    "Note": "use: cast to-dec <hex_value> to convert hex to decimal"
+  }'
+
+# Create Pool and liquidity
+forge script script/CreatePoolAndAddLiquidity.s.sol:CreatePoolAndAddLiquidityScript \
+  --rpc-url https://base-sepolia-rpc.publicnode.com \
+  --private-key $PRIVATE_KEY \
+  --broadcast \
+  -vvvv
+
+forge script script/AddLiquidity.s.sol:AddLiquidity \
+  --rpc-url https://base-sepolia-rpc.publicnode.com \
+  --private-key $PRIVATE_KEY \
+  --broadcast \
+  -vvvv

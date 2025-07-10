@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {Script} from "forge-std/Script.sol";
+import {Script, console} from "forge-std/Script.sol";
 import {IERC20} from "forge-std/interfaces/IERC20.sol";
 
 import {IHooks} from "@uniswap/v4-core/src/interfaces/IHooks.sol";
@@ -24,18 +24,31 @@ contract BaseScript is Script {
     /////////////////////////////////////
     // --- Configure These ---
     /////////////////////////////////////
-    IERC20 internal constant token0 = IERC20(0x0165878A594ca255338adfa4d48449f69242Eb8F);
-    IERC20 internal constant token1 = IERC20(0xa513E6E4b8f2a923D98304ec87F64353C4D5C853);
+    IERC20 internal constant token0 = IERC20(0x036CbD53842c5426634e7929541eC2318f3dCF7e); // USDC on Base Sepolia
+    IERC20 internal constant token1 = IERC20(0xCb8734448Bd46dd307c24F434180b0f2a6Df31f2); // MUSD on Base Sepolia
     IHooks constant hookContract = IHooks(address(0));
     /////////////////////////////////////
 
     Currency immutable currency0;
     Currency immutable currency1;
+    uint24 lpFee = 100;        // 0.01% - good for stables
+    int24 tickSpacing = 1;     // Tight spacing for price stability
 
     constructor() {
+        // Use hookmate for Pool Manager and Position Manager (these work)
         poolManager = IPoolManager(AddressConstants.getPoolManagerAddress(block.chainid));
         positionManager = IPositionManager(payable(AddressConstants.getPositionManagerAddress(block.chainid)));
-        swapRouter = IUniswapV4Router04(payable(AddressConstants.getV4SwapRouterAddress(block.chainid)));
+        
+        // Handle swap router with fallback for Base Sepolia
+        address swapRouterAddr;
+        if (block.chainid == 84532) {
+            // Base Sepolia - use hardcoded address since hookmate doesn't support it
+            swapRouterAddr = 0x94cC0AaC535CCDB3C01d6787D6413C739ae12bc4;
+        } else {
+            // For other chains, try hookmate
+            swapRouterAddr = AddressConstants.getV4SwapRouterAddress(block.chainid);
+        }
+        swapRouter = IUniswapV4Router04(payable(swapRouterAddr));
 
         deployerAddress = getDeployer();
 
@@ -65,7 +78,8 @@ contract BaseScript is Script {
         address[] memory wallets = vm.getWallets();
 
         require(wallets.length > 0, "No wallets found");
+        console.log("Using Deployer wallet: %s", wallets[0]);
 
-        return wallets[0];
+        return wallets[0];  
     }
 }
