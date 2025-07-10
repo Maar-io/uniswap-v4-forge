@@ -8,6 +8,8 @@ import {PoolKey} from "@uniswap/v4-core/src/types/PoolKey.sol";
 import {CurrencyLibrary, Currency} from "@uniswap/v4-core/src/types/Currency.sol";
 
 import {BaseScript} from "./base/BaseScript.s.sol";
+import {TickMath} from "@uniswap/v4-core/src/libraries/TickMath.sol";
+
 
 interface IPoolManager {
     struct SwapParams {
@@ -68,9 +70,9 @@ contract SwapScript is BaseScript {
 
         // Prepare swap params and test settings
         IPoolManager.SwapParams memory params = IPoolManager.SwapParams({
-            zeroForOne: false, // MUSD -> USDC
+            zeroForOne: true, // MUSD -> USDC
             amountSpecified: int256(1e5),
-            sqrtPriceLimitX96: 0 // no price limit
+            sqrtPriceLimitX96: 4295128740 // MIN_SQRT_PRICE + 1
         });
         TestSettings memory testSettings = TestSettings({
             takeClaims: false,

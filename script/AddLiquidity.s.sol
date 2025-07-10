@@ -18,8 +18,8 @@ contract AddLiquidity is BaseScript, LiquidityHelpers {
 
     uint160 startingPrice = 2 ** 96;
 
-    uint256 public token0Amount = 50e6; // 50 USDC
-    uint256 public token1Amount = 50e6; // 50 MUSD
+    uint256 public token0Amount = 9e6; // 50 USDC
+    uint256 public token1Amount = 9e6; // 50 MUSD
 
     int24 tickLower;
     int24 tickUpper;
@@ -35,14 +35,9 @@ contract AddLiquidity is BaseScript, LiquidityHelpers {
             hooks: hookContract
         });
 
-        // Calculate ticks
-        int24 currentTick = TickMath.getTickAtSqrtPrice(startingPrice);
-        tickLower =
-            ((currentTick - 5000 * tickSpacing) / tickSpacing) *
-            tickSpacing;
-        tickUpper =
-            ((currentTick + 5000 * tickSpacing) / tickSpacing) *
-            tickSpacing;
+        // Set ticks to always include 0 and be aligned to tickSpacing
+        tickLower = ((-100 / tickSpacing) * tickSpacing);
+        tickUpper = ((100 / tickSpacing) * tickSpacing);
 
         // Prepare liquidity params
         uint128 liquidity = LiquidityAmounts.getLiquidityForAmounts(
