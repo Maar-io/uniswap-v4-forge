@@ -23,8 +23,8 @@ contract CreatePoolAndAddLiquidityScript is BaseScript, LiquidityHelpers {
     uint160 startingPrice = 2 ** 96; // 1:1 starting price
 
     // --- liquidity position configuration --- //
-    uint256 public token0Amount = 50e6;   // 50 USDC (6 decimals)
-    uint256 public token1Amount = 50e18;  // 50 MUSD (18 decimals)
+    uint256 public token0Amount = 10e6;   // 50 USDC (6 decimals)
+    uint256 public token1Amount = 10e6;  // 50 MUSD (6 decimals)
 
     // range of the position, must be a multiple of tickSpacing
     int24 tickLower;
@@ -57,7 +57,7 @@ contract CreatePoolAndAddLiquidityScript is BaseScript, LiquidityHelpers {
         console2.log("Currency0 (USDC):", Currency.unwrap(currency0));
         console2.log("Currency1 (MUSD):", Currency.unwrap(currency1));
         console2.log("Token0 Amount:", token0Amount, "(50 USDC with 6 decimals)");
-        console2.log("Token1 Amount:", token1Amount, "(50 MUSD with 18 decimals)");
+        console2.log("Token1 Amount:", token1Amount, "(50 MUSD with 6 decimals)");
         console2.log("");
     }
     

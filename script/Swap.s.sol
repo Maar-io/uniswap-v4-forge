@@ -9,12 +9,36 @@ import {CurrencyLibrary, Currency} from "@uniswap/v4-core/src/types/Currency.sol
 
 import {BaseScript} from "./base/BaseScript.s.sol";
 
+interface IPoolManager {
+    struct SwapParams {
+        bool zeroForOne;
+        int256 amountSpecified;
+        uint160 sqrtPriceLimitX96;
+    }
+}
+
+struct TestSettings {
+    bool takeClaims;
+    bool settleUsingBurn;
+}
+
+interface IPoolSwapTest {
+    function swap(
+        PoolKey memory key,
+        IPoolManager.SwapParams memory params,
+        TestSettings memory testSettings,
+        bytes memory hookData
+    ) external payable returns (int256 delta);
+}
+
 contract SwapScript is BaseScript {
     using CurrencyLibrary for Currency;
 
     function run() external {
-        console2.log("=== Starting MUSD to USDC Swap ===");
+        console2.log("=== Starting MUSD to USDC Swap (PoolSwapTest) ===");
         console2.log("Deployer Address:", deployerAddress);
+        address poolSwapTest = 0x8B5bcC363ddE2614281aD875bad385E0A785D3B9;
+        console2.log("PoolSwapTest:", poolSwapTest);
         console2.log("");
 
         // Check balances BEFORE swap
@@ -23,7 +47,10 @@ contract SwapScript is BaseScript {
         uint256 musdBalanceBefore = IERC20(Currency.unwrap(currency1)).balanceOf(deployerAddress);
         console2.log("USDC Balance Before:", usdcBalanceBefore);
         console2.log("MUSD Balance Before:", musdBalanceBefore);
-        console2.log("Has enough MUSD (1e18)?", musdBalanceBefore >= 1e18);
+        console2.log("Has enough MUSD (1e6)?", musdBalanceBefore >= 1e6);
+        // Check MUSD allowance for PoolSwapTest
+        uint256 musdAllowance = IERC20(Currency.unwrap(currency1)).allowance(deployerAddress, poolSwapTest);
+        console2.log("MUSD Allowance for PoolSwapTest:", musdAllowance);
         console2.log("");
 
         PoolKey memory poolKey = PoolKey({
@@ -33,37 +60,33 @@ contract SwapScript is BaseScript {
             tickSpacing: tickSpacing,
             hooks: hookContract
         });
+
+        // Approve PoolSwapTest to spend MUSD (input token)
+        console2.log("Setting token approval for PoolSwapTest...");
+        token1.approve(poolSwapTest, type(uint256).max);
+        console2.log("Approval set");
+
+        // Prepare swap params and test settings
+        IPoolManager.SwapParams memory params = IPoolManager.SwapParams({
+            zeroForOne: false, // MUSD -> USDC
+            amountSpecified: int256(1e5),
+            sqrtPriceLimitX96: 0 // no price limit
+        });
+        TestSettings memory testSettings = TestSettings({
+            takeClaims: false,
+            settleUsingBurn: false
+        });
         bytes memory hookData = new bytes(0);
 
-        console2.log("=== SWAP CONFIGURATION ===");
-        console2.log("Amount In (MUSD): 1e18");
-        console2.log("Min Amount Out (USDC): 0");
-        console2.log("Zero for One:", false);
-        console2.log("Pool Fee:", lpFee);
-        console2.log("");
-
-        vm.startBroadcast();
-
-        console2.log("Setting token approvals...");
-        // We'll approve both, just for testing.
-        token1.approve(address(swapRouter), type(uint256).max);
-        token0.approve(address(swapRouter), type(uint256).max);
-        console2.log("Approvals set");
-
-        console2.log("Executing swap...");
-        // Execute swap
-        swapRouter.swapExactTokensForTokens({
-            amountIn: 1e18,
-            amountOutMin: 0, // 0.95 USDC minimum (6 decimals)
-            zeroForOne: false, // false: MUSD (currency1) → USDC (currency0)
-            poolKey: poolKey,
-            hookData: hookData,
-            receiver: deployerAddress, // Changed from address(this) to deployerAddress
-            deadline: block.timestamp + 3600 // Changed from +1 to +3600 for safety
-        });
-        console2.log("Swap completed!");
-
-        vm.stopBroadcast();
+        // Swap: MUSD (currency1) -> USDC (currency0)
+        console2.log("Executing PoolSwapTest swap...");
+        int256 delta = IPoolSwapTest(poolSwapTest).swap(
+            poolKey,
+            params,
+            testSettings,
+            hookData
+        );
+        console2.log("Swap completed! Delta:", delta);
 
         // Check balances AFTER swap
         console2.log("=== AFTER SWAP ===");
@@ -84,7 +107,7 @@ contract SwapScript is BaseScript {
 
         // Conclusion
         console2.log("=== CONCLUSION ===");
-        if (musdUsed == 1e18) {
+        if (musdUsed == 1e6) {
             console2.log(unicode"✅ Correct amount of MUSD used (1.0)");
         } else {
             console2.log(unicode"❌ Unexpected MUSD amount used");

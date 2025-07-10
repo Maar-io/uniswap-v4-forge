@@ -16,18 +16,17 @@ import {LiquidityHelpers} from "./base/LiquidityHelpers.s.sol";
 contract AddLiquidity is BaseScript, LiquidityHelpers {
     using CurrencyLibrary for Currency;
 
-    int24 tickSpacing = 1;
     uint160 startingPrice = 2 ** 96;
 
-    uint256 public token0Amount = 50e6;   // 50 USDC
-    uint256 public token1Amount = 50e18;  // 50 MUSD
+    uint256 public token0Amount = 50e6; // 50 USDC
+    uint256 public token1Amount = 50e6; // 50 MUSD
 
     int24 tickLower;
     int24 tickUpper;
 
     function run() external {
         console2.log("=== Adding Liquidity to Existing Pool ===");
-        
+
         PoolKey memory poolKey = PoolKey({
             currency0: currency0,
             currency1: currency1,
@@ -38,8 +37,12 @@ contract AddLiquidity is BaseScript, LiquidityHelpers {
 
         // Calculate ticks
         int24 currentTick = TickMath.getTickAtSqrtPrice(startingPrice);
-        tickLower = ((currentTick - 5000 * tickSpacing) / tickSpacing) * tickSpacing;
-        tickUpper = ((currentTick + 5000 * tickSpacing) / tickSpacing) * tickSpacing;
+        tickLower =
+            ((currentTick - 5000 * tickSpacing) / tickSpacing) *
+            tickSpacing;
+        tickUpper =
+            ((currentTick + 5000 * tickSpacing) / tickSpacing) *
+            tickSpacing;
 
         // Prepare liquidity params
         uint128 liquidity = LiquidityAmounts.getLiquidityForAmounts(
@@ -54,24 +57,44 @@ contract AddLiquidity is BaseScript, LiquidityHelpers {
         uint256 amount1Max = token1Amount + 1;
         bytes memory hookData = new bytes(0);
 
-        (bytes memory actions, bytes[] memory mintParams) = _mintLiquidityParams(
-            poolKey, tickLower, tickUpper, liquidity, amount0Max, amount1Max, deployerAddress, hookData
-        );
+        (
+            bytes memory actions,
+            bytes[] memory mintParams
+        ) = _mintLiquidityParams(
+                poolKey,
+                tickLower,
+                tickUpper,
+                liquidity,
+                amount0Max,
+                amount1Max,
+                deployerAddress,
+                hookData
+            );
 
         console2.log("=== Executing Liquidity Addition ===");
-        
+
         vm.startBroadcast();
-        
+
         tokenApprovals();
-        
+
+        console2.log("tickLower:", tickLower);
+        console2.log("tickUpper:", tickUpper);
+        console2.log("Calculated liquidity:", liquidity);
+        console2.log("Amount0 (USDC):", token0Amount);
+        console2.log("Amount1 (MUSD):", token1Amount);
+
         // Only add liquidity (no pool initialization)
         positionManager.modifyLiquidities(
-            abi.encode(actions, mintParams), 
+            abi.encode(actions, mintParams),
             block.timestamp + 3600
         );
-        
+        uint256 usdcAfter = token0.balanceOf(deployerAddress);
+        uint256 musdAfter = token1.balanceOf(deployerAddress);
+        console2.log("USDC After:", usdcAfter);
+        console2.log("MUSD After:", musdAfter);
+
         console2.log(unicode"✅ Liquidity added successfully!");
-        
+
         vm.stopBroadcast();
     }
 }

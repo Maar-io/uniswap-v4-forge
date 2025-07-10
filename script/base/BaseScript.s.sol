@@ -25,7 +25,7 @@ contract BaseScript is Script {
     // --- Configure These ---
     /////////////////////////////////////
     IERC20 internal constant token0 = IERC20(0x036CbD53842c5426634e7929541eC2318f3dCF7e); // USDC on Base Sepolia
-    IERC20 internal constant token1 = IERC20(0xCb8734448Bd46dd307c24F434180b0f2a6Df31f2); // MUSD on Base Sepolia
+    IERC20 internal constant token1 = IERC20(0x5f6D35D1Add891416969194709ddd374B6D26253); // MUSD on Base Sepolia
     IHooks constant hookContract = IHooks(address(0));
     /////////////////////////////////////
 
@@ -43,7 +43,7 @@ contract BaseScript is Script {
         address swapRouterAddr;
         if (block.chainid == 84532) {
             // Base Sepolia - use hardcoded address since hookmate doesn't support it
-            swapRouterAddr = 0x94cC0AaC535CCDB3C01d6787D6413C739ae12bc4;
+            swapRouterAddr = 0x492E6456D9528771018DeB9E87ef7750EF184104;
         } else {
             // For other chains, try hookmate
             swapRouterAddr = AddressConstants.getV4SwapRouterAddress(block.chainid);
