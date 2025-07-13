@@ -24,15 +24,18 @@ contract BaseScript is Script {
     /////////////////////////////////////
     // --- Configure These ---
     /////////////////////////////////////
-    IERC20 internal constant token0 = IERC20(0x036CbD53842c5426634e7929541eC2318f3dCF7e); // USDC on Base Sepolia
-    IERC20 internal constant token1 = IERC20(0x5f6D35D1Add891416969194709ddd374B6D26253); // MUSD on Base Sepolia
+    // IERC20 internal constant token0 = IERC20(0x036CbD53842c5426634e7929541eC2318f3dCF7e); // USDC on Base Sepolia
+    // IERC20 internal constant token1 = IERC20(0x5f6D35D1Add891416969194709ddd374B6D26253); // MUSD on Base Sepolia
+    /////////////////////////////////////
+    IERC20 internal constant token0 = IERC20(0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238); // USDC on Sepolia
+    IERC20 internal constant token1 = IERC20(0x65675DCB0558030eaE5fc3E42a41df576cc437Ef); // MUSD on Sepolia
     IHooks constant hookContract = IHooks(address(0));
     /////////////////////////////////////
 
     Currency immutable currency0;
     Currency immutable currency1;
-    uint24 lpFee = 100;        // 0.01% - good for stables
-    int24 tickSpacing = 1;     // Tight spacing for price stability
+    uint24 lpFee = 500;        // 0.01% - good for stables
+    int24 tickSpacing = 10;     // Tight spacing for price stability
 
     constructor() {
         // Use hookmate for Pool Manager and Position Manager (these work)

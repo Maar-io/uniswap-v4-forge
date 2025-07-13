@@ -1,0 +1,54 @@
+forge script script/Swap.s.sol:SwapScript --rpc-url https://sepolia.infura.io/v3/$INFURA_KEY --broadcast --chain-id 11155111 --private-key $PRIVATE_KEY
+[⠊] Compiling...
+[⠘] Compiling 1 files with Solc 0.8.29
+[⠃] Solc 0.8.29 finished in 677.81ms
+Compiler run successful!
+Script ran successfully.
+
+== Logs ==
+  Using Deployer wallet: 0x911d82b108804A18022d0A2621B2Fc608DEF6FCA
+  Using timestamp: 1752426828
+
+## Setting up 1 EVM.
+
+==========================
+
+Chain 11155111
+
+Estimated gas price: 0.002092762 gwei
+
+Estimated total gas used for script: 321785
+
+Estimated amount required: 0.00000067341942017 ETH
+
+==========================
+
+##### sepolia
+✅  [Success] Hash: 0x6cb4a95a918ae4d91ba23bf2e6bf844c5cc80581856c42de48360530ec41e2a4
+Block: 8756564
+Paid: 0.000000237351289761 ETH (156267 gas * 0.001518883 gwei)
+
+
+##### sepolia
+✅  [Success] Hash: 0x9768682a83d7a4ee1a30927d09573b36a685e7f225ff8c065039ee39739b3eea
+Block: 8756564
+Paid: 0.000000041451835953 ETH (27291 gas * 0.001518883 gwei)
+
+
+##### sepolia
+✅  [Success] Hash: 0xaeaab6dc6a5371a0fd30ef55625b52db8f9ab232b6aee6074cfe45a7241914f5
+Block: 8756564
+Paid: 0.000000058648629279 ETH (38613 gas * 0.001518883 gwei)
+
+✅ Sequence #1 on sepolia | Total Paid: 0.000000337451754993 ETH (222171 gas * avg 0.001518883 gwei)
+                                                                                                                      
+
+==========================
+
+ONCHAIN EXECUTION COMPLETE & SUCCESSFUL.
+
+Transactions saved to: /Users/mario/op/uniswap-v4-forge/broadcast/Swap.s.sol/11155111/run-latest.json
+
+Sensitive values saved to: /Users/mario/op/uniswap-v4-forge/cache/Swap.s.sol/11155111/run-latest.json
+
+

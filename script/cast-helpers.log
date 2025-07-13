@@ -103,3 +103,66 @@ echo "PoolManager Tick Info (tickUpper):" && cast call $BASESEP_POOL_MANAGER "ge
 # 10. Check PoolManager's Pool Info
 echo "\nPoolManager Pool Info:" && cast call $BASESEP_POOL_MANAGER "getPool(bytes32)" $BASESEP_POOL_ID --rpc-url $BASESEP_RPC
 
+
+================ SONEIUM ===============
+export SONEIUM_USDT0=0x102d758f688a4C1C5a80b116bD945d4455460282
+export SONEIUM_USDT=0x3A337a6adA9d885b6Ad95ec48F9b75f197b5AE35
+export SONEIUM_USDC=0xbA9986D2381edf1DA03B0B9c1f8b00dc4AacC369
+export SONEIUM_POOL_MANAGER=0x360e68faccca8ca495c1b759fd9eee466db9fb32
+export SONEIUM_STATE_VIEW=0x76fd297e2d437cd7f76d50f01afe6160f86e9990
+export SONEIUM_QUOTER=0x3972C00f7ed4885e145823eb7C655375d275A1C5
+export SONEIUM_POSITION_MANAGER=0x1b35d13a2E2528f192637F14B05f0Dc0e7dEB566
+export SONEIUM_POOL_ID=0x86d50269915c269f9c1a1ef9a4685133a1dd84ac109ab4964bdbec7a338608be
+export SONEIUM_POOL_ID25=0x86d50269915c269f9c1a1ef9a4685133a1dd84ac109ab4964b
+export SONEIUM_POOL_ID=0xffe4303dc2500ac8415f8bbae706d12b6dffdc31deda77eb38ccaa04c6c5b8db
+export SONEIUM_POOL_ID25=0xffe4303dc2500ac8415f8bbae706d12b6dffdc31deda77eb38
+export SONEIUM_POOL_ID=0xf3e830c1da458d939a0173f0843fba7208e12022ab1d60f3fd7539374d02673d
+export SONEIUM_POOL_ID25=0xf3e830c1da458d939a0173f0843fba7208e12022ab1d60f3fd
+
+# get pool quote
+
+cast call $SONEIUM_STATE_VIEW "getLiquidity(bytes32)" $SONEIUM_POOL_ID --rpc-url $SON_RPC
+cast call $SONEIUM_STATE_VIEW "getSlot0(bytes32)" $SONEIUM_POOL_ID --rpc-url $SON_RPC | jq -Rr --arg poolid "$BASESEP_POOL_ID" '
+  . as $hex |
+  ($hex | ltrimstr("0x")) as $clean |
+  {
+    "poolId": $poolid,
+    "raw": $hex,
+    "sqrtPriceX96_hex": ("0x" + $clean[0:64]),
+    "tick_hex": ("0x" + $clean[64:112]),
+    "protocolFee_hex": ("0x" + $clean[112:128]),
+    "lpFee_hex": ("0x" + $clean[(-6):]),
+    "Note": "use: cast to-dec <hex_value> to convert hex to decimal"
+  }'
+
+cast call $SONEIUM_POSITION_MANAGER "poolKeys(bytes25)(address,address,uint24,int24,address)" $SONEIUM_POOL_ID25 --rpc-url $SON_RPC
+
+## find quote for this pool
+0x102d758f688a4C1C5a80b116bD945d4455460282
+0x3A337a6adA9d885b6Ad95ec48F9b75f197b5AE35
+5000
+100
+0x0000000000000000000000000000000000000000
+
+0x102d758f688a4C1C5a80b116bD945d4455460282
+0xbA9986D2381edf1DA03B0B9c1f8b00dc4AacC369
+500
+10
+0x0000000000000000000000000000000000000000
+
+0x3A337a6adA9d885b6Ad95ec48F9b75f197b5AE35
+0xbA9986D2381edf1DA03B0B9c1f8b00dc4AacC369
+50
+1
+0x0000000000000000000000000000000000000000
+
+cast call $SONEIUM_QUOTER "quoteExactInputSingle((address,address,uint24,int24,address),bool,uint128,bytes)" '(0x102d758f688a4C1C5a80b116bD945d4455460282,0x3A337a6adA9d885b6Ad95ec48F9b75f197b5AE35,5000,100,0x0000000000000000000000000000000000000000)' true 1000000 0x --rpc-url $SON_RPC
+
+
+cast send 0x0E2850543f69F678257266E0907fF9A58B3F13dE \
+  "execute(bytes,bytes[],uint256)" \
+  0x0a \
+  $SWAP_INPUT \
+  1752255077 \
+  --private-key $PRIVATE_KEY \
+  --rpc-url https://rpc.soneium.org
