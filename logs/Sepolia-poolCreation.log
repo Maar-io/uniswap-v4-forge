@@ -1,0 +1,109 @@
+➜ forge script script/CreatePoolAndAddLiquidity.s.sol:CreatePoolAndAddLiquidityScript --rpc-url https://sepolia.infura.io/v3/$INFURA_KEY --broadcast --chain-id 11155111 --private-key $PRIVATE_KEY
+[⠊] Compiling...
+No files changed, compilation skipped
+Script ran successfully.
+
+== Logs ==
+  Using Deployer wallet: 0x911d82b108804A18022d0A2621B2Fc608DEF6FCA
+  === Starting Pool Creation and Liquidity Addition ===
+  Chain ID: 11155111
+  Deployer Address: 0x911d82b108804A18022d0A2621B2Fc608DEF6FCA
+  
+  === Token Configuration ===
+  Currency0 (USDC): 0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238
+  Currency1 (MUSD): 0x65675DCB0558030eaE5fc3E42a41df576cc437Ef
+  Token0 Amount: 1000000000
+  Token1 Amount: 1000000000
+  
+  === Pre-Transaction Token Balances ===
+  USDC Balance: 75622260509
+  MUSD Balance: 1000000000000
+  Has enough USDC? true
+  Has enough MUSD? true
+  
+  === Pool Configuration ===
+  Fee: 500 (0.01%)
+  Tick Spacing: 10
+  Starting Price (sqrtPriceX96): 79228162514264337593543950336
+  Hooks Contract: 0x0000000000000000000000000000000000000000
+  
+  === Tick Calculations ===
+  Current Tick (from starting price): 0
+  Tick Lower: -50000
+  Tick Upper: 50000
+  Tick Range: 100000
+  
+  === Liquidity Calculations ===
+  Calculated Liquidity: 1089437667
+  
+  === Multicall Parameters Prepared ===
+  Param count: 2
+  
+  === Starting Transaction ===
+  Position Manager: 0x429ba70129df741B2Ca2a85BC3A2a3328e5c09b4
+  Broadcasting transaction...
+  Token approvals completed
+  Executing multicall...
+  Multicall completed successfully!
+  === Post-Transaction Token Balances ===
+  USDC Balance After: 74622260509
+  MUSD Balance After: 999000000000
+  
+  === Pool Creation Complete! ===
+  ✅ Pool initialized with 1:1 price ratio
+  ✅ Liquidity position created
+  ✅ Pool ready for trading
+
+## Setting up 1 EVM.
+
+==========================
+
+Chain 11155111
+
+Estimated gas price: 0.001606286 gwei
+
+Estimated total gas used for script: 898851
+
+Estimated amount required: 0.000001443811777386 ETH
+
+==========================
+
+##### sepolia
+✅  [Success] Hash: 0xfcff8e1f7afee20d74e2ed7c2f0d91eaec7bb5bb178f1c71ac3aaa4cf586a311
+Block: 8756439
+Paid: 0.000000063150675159 ETH (47203 gas * 0.001337853 gwei)
+
+
+##### sepolia
+✅  [Success] Hash: 0xd0dfe525465efd7073ac8b1ec482b9f909879c11b16188e222be7d5f177e0fae
+Block: 8756439
+Paid: 0.000000604635974085 ETH (451945 gas * 0.001337853 gwei)
+
+
+##### sepolia
+✅  [Success] Hash: 0xcde0f07e045a332ddeb761e52c8f70e63fcab275f3b501d23e5f7b2fb0c679ea
+Block: 8756439
+Paid: 0.000000041096168454 ETH (30718 gas * 0.001337853 gwei)
+
+
+##### sepolia
+✅  [Success] Hash: 0x6f2c9b7df8cb586093e6b36f1177135addf9825039b5d66fd8ddd166323027bd
+Block: 8756439
+Paid: 0.000000051674572125 ETH (38625 gas * 0.001337853 gwei)
+
+
+##### sepolia
+✅  [Success] Hash: 0xcf468e762349266acca261036ebc82741549edfecb9cb3e9b26cd54ef33f1921
+Block: 8756439
+Paid: 0.000000063973454754 ETH (47818 gas * 0.001337853 gwei)
+
+✅ Sequence #1 on sepolia | Total Paid: 0.000000824530844577 ETH (616309 gas * avg 0.001337853 gwei)
+                                                                                                                      
+
+==========================
+
+ONCHAIN EXECUTION COMPLETE & SUCCESSFUL.
+
+Transactions saved to: /Users/mario/op/uniswap-v4-forge/broadcast/CreatePoolAndAddLiquidity.s.sol/11155111/run-latest.json
+
+Sensitive values saved to: /Users/mario/op/uniswap-v4-forge/cache/CreatePoolAndAddLiquidity.s.sol/11155111/run-latest.json
