@@ -1,0 +1,92 @@
+forge script script/CreateETHpool.sol:CreateEthPoolScript --rpc-url $SEPOLIA_RPC --private-key $PRIVATE_KEY --broadcast --chain 11155111
+[⠊] Compiling...
+[⠔] Compiling 2 files with Solc 0.8.29
+[⠒] Solc 0.8.29 finished in 1.43s
+Compiler run successful!
+Script ran successfully.
+
+== Logs ==
+  Using Deployer wallet: 0x911d82b108804A18022d0A2621B2Fc608DEF6FCA
+  === Starting Pool Creation and Liquidity Addition ===
+  Chain ID: 11155111
+  Deployer Address: 0x911d82b108804A18022d0A2621B2Fc608DEF6FCA
+  
+  === Token Configuration ===
+  Currency0 (ETH): 0x0000000000000000000000000000000000000000
+  Currency1 (MUSD): 0x65675DCB0558030eaE5fc3E42a41df576cc437Ef
+  Token0 Amount: 1000000000000000000
+  Token1 Amount: 3500000000
+  
+  === Pre-Transaction Token Balances ===
+  USDC Balance: 83061736601536876197
+  MUSD Balance: 997989715925
+  Has enough USDC? true
+  Has enough MUSD? true
+  
+  === Pool Configuration ===
+  Fee: 500 (0.01%)
+  Tick Spacing: 100
+  Starting Price (sqrtPriceX96): 1873855042454260090959041
+  Hooks Contract: 0x0000000000000000000000000000000000000000
+  
+  === Tick Calculations ===
+  Current Tick (from starting price): -213053
+  Tick Lower: -713000
+  Tick Upper: 286900
+  Tick Range: 999900
+  
+  === Liquidity Calculations ===
+  Calculated Liquidity: 23651375761024
+  
+  === Multicall Parameters Prepared ===
+  Param count: 2
+  
+  === Starting Transaction ===
+  Position Manager: 0x429ba70129df741B2Ca2a85BC3A2a3328e5c09b4
+  Broadcasting transaction...
+  Token approvals completed
+  Executing multicall...
+  Multicall completed successfully!
+  === Post-Transaction Token Balances ===
+  ETH Balance After: 82061736601536895847
+  Token1 Balance After: 997430328349
+  
+  === Pool Creation Complete! ===
+  ✅ Pool initialized with 1:1 price ratio
+  ✅ Liquidity position created
+  ✅ Pool ready for trading
+
+## Setting up 1 EVM.
+
+==========================
+
+Chain 11155111
+
+Estimated gas price: 0.001094936 gwei
+
+Estimated total gas used for script: 636879
+
+Estimated amount required: 0.000000697341744744 ETH
+
+==========================
+
+##### sepolia
+✅  [Success] Hash: 0xd4f7c65d681f22b8ec6efa517f15f079e764f98da0f63137f88c57cfde02d002
+Block: 8833252
+Paid: 0.000000029887638495 ETH (27303 gas * 0.001094665 gwei)
+
+
+##### sepolia
+✅  [Success] Hash: 0xbae7bce76baefaa55baeda36c181320ceb46c334e4640a1f28e5e8760a75b047
+Block: 8833252
+Paid: 0.00000003056085747 ETH (27918 gas * 0.001094665 gwei)
+
+
+##### sepolia
+✅  [Success] Hash: 0xb5404f9d2ee0d6fe6f1329eda6daf0091a64fee7393824d7839e59e3b7c03caf
+Block: 8833254
+Paid: 0.000000419606877198 ETH (383322 gas * 0.001094659 gwei)
+
+✅ Sequence #1 on sepolia | Total Paid: 0.000000480055373163 ETH (438543 gas * avg 0.001094663 gwei)
+                                                                                                    
+

@@ -166,3 +166,58 @@ cast send 0x0E2850543f69F678257266E0907fF9A58B3F13dE \
   1752255077 \
   --private-key $PRIVATE_KEY \
   --rpc-url https://rpc.soneium.org
+
+
+export WALLET_USER=0x911d82b108804A18022d0A2621B2Fc608DEF6FCA
+export SEPOLIA_MUSD_CONTRACT=0x65675DCB0558030eaE5fc3E42a41df576cc437Ef
+export SEPOLIA_USDC_CONTRACT=0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238
+export PERMIT2_ADDRESS=0x000000000022D473030F116dDEE9F6B43aC78BA3
+export SEPOLIA_RPC=https://ethereum-sepolia.publicnode.com
+export SEPOLIA_POOL_MANAGER=0xE03A1074c86CFeDd5C142C4F04F1a1536e203543
+export SEPOLIA_POSITION_MANAGER=0x429ba70129df741B2Ca2a85BC3A2a3328e5c09b4
+export SEPOLIA_STATE_VIEW=0xe1dd9c3fa50edb962e442f60dfbc432e24537e4c
+export SEPOLIA_UNIVERSAL_ROUTER=0x3A9D48AB9751398BbFa63ad67599Bb04e4BdF98b
+export SEPOLIA_POOL_ID=0x3F7C20DC9A208115DD9C142920C2820CDE1D272FC22BB4B3F939E6C9C1479E8C
+export SEPOLIA_POOL_ID_25=0x3F7C20DC9A208115DD9C142920C2820CDE1D272FC22BB4B3F9
+
+echo "\nPositionManager Balance for $WALLET_USER:" && BALANCE=$(cast call $SEPOLIA_POSITION_MANAGER "balanceOf(address)" $WALLET_USER --rpc-url $SEPOLIA_RPC) && echo "NFT Count: $BALANCE" 
+
+cast call $SEPOLIA_STATE_VIEW "getSlot0(bytes32)" $SEPOLIA_POOL_ID --rpc-url $SEPOLIA_RPC | jq -Rr --arg poolid "$SEPOLIA_POOL_ID" '
+  . as $hex |
+  ($hex | ltrimstr("0x")) as $clean |
+  {
+    "poolId": $poolid,
+    "raw": $hex,
+    "sqrtPriceX96_hex": ("0x" + $clean[0:64]),
+    "tick_hex": ("0x" + $clean[64:112]),
+    "protocolFee_hex": ("0x" + $clean[112:128]),
+    "lpFee_hex": ("0x" + $clean[(-6):]),
+    "Note": "use: cast to-dec <hex_value> to convert hex to decimal"
+  }'
+
+cast call $SEPOLIA_POSITION_MANAGER "poolKeys(bytes25)(address,address,uint24,int24,address)" $SEPOLIA_POOL_ID_25 --rpc-url $SEPOLIA_RPC
+
+cast call $SEPOLIA_STATE_VIEW "getLiquidity(bytes32)(uint128)" $SEPOLIA_POOL_ID --rpc-url $SEPOLIA_RPC | jq -Rr 
+
+cast call $PERMIT2_ADDRESS "allowance(address,address,address)(uint160,uint48,uint48)" \
+     $WALLET_USER $SEPOLIA_USDC_CONTRACT $SEPOLIA_UNIVERSAL_ROUTER \
+     --rpc-url https://ethereum-sepolia.publicnode.com
+
+cast call $PERMIT2_ADDRESS "allowance(address,address,address)(uint160,uint48,uint48)" \
+     $WALLET_USER $SEPOLIA_MUSD_CONTRACT $SEPOLIA_UNIVERSAL_ROUTER \
+     --rpc-url https://ethereum-sepolia.publicnode.com
+
+cast send $PERMIT2_ADDRESS "approve(address,address,uint160,uint48)" \
+  $SEPOLIA_MUSD_CONTRACT $SEPOLIA_UNIVERSAL_ROUTER 10000000 1752680070 \
+  --rpc-url https://ethereum-sepolia.publicnode.com --private-key $PRIVATE_KEY
+
+cast send $PERMIT2_ADDRESS "approve(address,address,uint160,uint48)" \
+  $SEPOLIA_MUSD_CONTRACT $WALLET_USER 10000000 1752780070 \
+  --rpc-url https://ethereum-sepolia.publicnode.com --private-key $PRIVATE_KEY
+
+cast send $PERMIT2_ADDRESS "transferFrom(address,address,uint160,address)" \
+  $WALLET_USER 0x229831f48cd408Bf862C600e46FF864De071c16B 1200000 $SEPOLIA_MUSD_CONTRACT  \
+  --rpc-url https://ethereum-sepolia.publicnode.com --private-key $PRIVATE_KEY
+
+cast call $SEPOLIA_USDC_CONTRACT "balanceOf(address)(uint256)" $WALLET_USER --rpc-url $SEPOLIA_RPC
+cast call $SEPOLIA_MUSD_CONTRACT "balanceOf(address)(uint256)" $WALLET_USER --rpc-url $SEPOLIA_RPC

@@ -34,6 +34,7 @@ contract LiquidityHelpers is BaseScript {
     }
 
     function tokenApprovals() public {
+        // Only approve ERC20 tokens, skip native ETH (address(0))
         if (!currency0.isAddressZero()) {
             token0.approve(address(permit2), type(uint256).max);
             permit2.approve(address(token0), address(positionManager), type(uint160).max, type(uint48).max);
@@ -43,5 +44,6 @@ contract LiquidityHelpers is BaseScript {
             token1.approve(address(permit2), type(uint256).max);
             permit2.approve(address(token1), address(positionManager), type(uint160).max, type(uint48).max);
         }
+        // If either token is native ETH, do nothing (no approval needed or possible)
     }
 }
