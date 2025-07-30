@@ -14,7 +14,7 @@ contract MyToken is ERC20 {
         uint256 initialAmount
     ) ERC20(name, symbol) {
         myDecimals = decimals_;
-        _mint(msg.sender, initialAmount * 10 ** decimals_);
+        _mint(msg.sender, initialAmount);
     }
 
     function mint(address to, uint256 amount) public{

@@ -20,8 +20,10 @@ contract LocalAddresses {
     IPoolManager immutable poolManager = IPoolManager(0x360E68faCcca8cA495c1B759Fd9EEe466db9FB32); // Soneium
     IPositionManager immutable positionManager = IPositionManager(payable(0x1b35d13a2E2528f192637F14B05f0Dc0e7dEB566)); // Soneium
 
-
     IERC20 internal constant tokenETH = IERC20(0x0000000000000000000000000000000000000000);
     IERC20 internal constant tokenUSDC = IERC20(0xbA9986D2381edf1DA03B0B9c1f8b00dc4AacC369); // USDC on Soneium mainnet (forked)
    
+    IHooks constant hookContract = IHooks(address(0));
+
+    address usdcWhale = 0x45f1A95A4D3f3836523F5c83673c797f4d4d263B; // USDC-rich address on Soneium
 }

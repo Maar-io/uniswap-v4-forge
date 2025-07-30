@@ -17,19 +17,16 @@ import {MyToken} from "../../src/MyToken.sol";
 contract BaseLocalhostScript is Script, LocalAddresses{
     IERC20 internal tokenMUSD;
 
-    IHooks constant hookContract = IHooks(address(0));
     /////////////////////////////////////
 
     Currency internal currency0;
-    Currency internal currency1;
-    uint24 lpFee = 500;        
-    int24 tickSpacing = 100;     
+    Currency internal currency1; 
 
     constructor() {
         deployerAddress = getDeployer();
 
         tokenMUSD = deployToken("MUSD", "MUSD", 6, 100_000 * 10 ** 6);
-        (currency0, currency1) = getCurrencies(address(tokenETH), address(tokenMUSD));
+        (currency0, currency1) = getCurrencies(address(tokenUSDC), address(tokenMUSD));
 
         vm.label(address(tokenETH), "TokenETH");
         vm.label(address(tokenUSDC), "TokenUSDC");
@@ -38,6 +35,12 @@ contract BaseLocalhostScript is Script, LocalAddresses{
         vm.label(address(poolManager), "PoolManager");
         vm.label(address(positionManager), "PositionManager");
         vm.label(address(hookContract), "HookContract");
+    }
+
+    function fundTestAccountWithUSDC() public {
+        vm.startPrank(usdcWhale);
+        tokenUSDC.transfer(deployerAddress, 1_000_000e6); // Transfer 1,000,000 USDC (6 decimals)
+        vm.stopPrank();
     }
 
     function deployToken(string memory name, string memory symbol, uint8 decimals, uint256 mintAmount) public returns (IERC20) {
@@ -56,12 +59,16 @@ contract BaseLocalhostScript is Script, LocalAddresses{
         }
     }
 
-    function getDeployer() public returns (address) {
-        address[] memory wallets = vm.getWallets();
+    // function getDeployer() public returns (address) {
+    //     address[] memory wallets = vm.getWallets();
 
-        require(wallets.length > 0, "No wallets found");
-        console.log("Using Deployer wallet: %s", wallets[0]);
+    //     require(wallets.length > 0, "No wallets found");
+    //     console.log("Using Deployer wallet: %s", wallets[0]);
 
-        return wallets[0];  
+    //     return wallets[0];  
+    // }
+
+    function getDeployer() public pure returns (address) {
+        return 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266; // Anvil account[0]
     }
 }

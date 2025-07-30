@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+import {console2} from "forge-std/Script.sol";
 import {PoolKey} from "@uniswap/v4-core/src/types/PoolKey.sol";
 import {CurrencyLibrary, Currency} from "@uniswap/v4-core/src/types/Currency.sol";
 import {Actions} from "@uniswap/v4-periphery/src/libraries/Actions.sol";
@@ -46,6 +47,7 @@ contract LiquidityLocalhostHelpers is LocalAddresses{
             token1.approve(address(permit2), type(uint256).max);
             permit2.approve(address(token1), address(positionManager), type(uint160).max, type(uint48).max);
         }
-        // If either token is native ETH, do nothing (no approval needed or possible)
+
+        console2.log("Token approvals completed");
     }
 }
