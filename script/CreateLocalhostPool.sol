@@ -30,21 +30,42 @@ contract CreateLocalhostPoolScript is BaseLocalhostScript, LiquidityLocalhostHel
 
     function run() external {
         _logInitialInfo();
-        fundTestAccountWithUSDC();
+
+        // 1. Deploy MUSD token first during broadcast
+        vm.startBroadcast(deployerAddress);
+        tokenMUSD = deployToken("MUSD", "MUSD", 6, 1_000_000 * 10 ** 6);
+        vm.stopBroadcast();
+
+        // Set up currencies
+        (currency0, currency1) = getCurrencies(address(tokenUSDC), address(tokenMUSD));
+
+        // 3. Create pool and add liquidity
+        // Check balances before creating the pool
         _checkTokenBalance(address(tokenUSDC), tokenUSDCAmount, "USDC");
         _checkTokenBalance(address(tokenMUSD), tokenMUSDAmount, "MUSD");
 
+        // Create pool key
         PoolKey memory poolKey = _createPoolKey();
         _logPoolConfig(poolKey);
         
+        // Calculate ticks based on the starting price
         _calculateTicks();
         
+        // Prepare liquidity mint parameters
         (bytes memory actions, bytes[] memory mintParams) = _prepareMintParams(poolKey, startingStablePrice, tokenUSDCAmount, tokenMUSDAmount);
         bytes[] memory params = _prepareMulticallParams(actions, mintParams, poolKey, startingStablePrice);
         
         _executeTransaction(params, tokenUSDCAmount);
         _logResults();
     }
+
+    // function _deployMUSDToken() internal {
+    //     vm.startBroadcast(deployerAddress);
+    //     tokenMUSD = deployToken("MUSD", "MUSD", 6, 1_000_000 * 10 ** 6);
+    //     vm.stopBroadcast();
+        
+    //     console2.log("MUSD token deployed at:", address(tokenMUSD));
+    // }
     
     function _logInitialInfo() internal view {
         console2.log("=== Starting Pool Creation and Liquidity Addition ===");
@@ -55,7 +76,11 @@ contract CreateLocalhostPoolScript is BaseLocalhostScript, LiquidityLocalhostHel
     
     function _checkTokenBalance(address token, uint256 amount, string memory name) internal view {
         uint256 balance = IERC20(token).balanceOf(deployerAddress);
-        console2.log(name, "Balance: ", balance);
+        console2.log(name);
+        console2.log("Balance:");
+        console2.logUint(balance);
+        console2.log("User:");
+        console2.logAddress(deployerAddress);
 
         console2.log("Has enough ", name, "? : ", balance >= amount);
         console2.log("");
@@ -73,7 +98,7 @@ contract CreateLocalhostPoolScript is BaseLocalhostScript, LiquidityLocalhostHel
 
     function _logPoolConfig(PoolKey memory poolKey) internal view {
         console2.log("=== Pool Configuration ===");
-        console2.log("Fee:", poolKey.fee, "(0.01%)");
+        console2.log("Fee:", poolKey.fee);
         console2.log("Tick Spacing:", uint256(int256(poolKey.tickSpacing)));
         console2.log("Starting Price (sqrtPriceX96):", startingStablePrice);
         console2.log("Hooks Contract:", address(poolKey.hooks));
@@ -148,18 +173,25 @@ contract CreateLocalhostPoolScript is BaseLocalhostScript, LiquidityLocalhostHel
         tokenApprovals(tokenUSDC, tokenMUSD);
 
         console2.log("Executing multicall...");
-        positionManager.multicall{value: valueToPass}(params);
-        console2.log("Multicall completed successfully!");
+        try positionManager.multicall{value: valueToPass}(params) {
+            console2.log("Multicall completed successfully!");
+        } catch Error(string memory reason) {
+            console2.log("Multicall failed:", reason);
+            // Don't revert - the failure might be expected (e.g., pool already exists)
+        }
         
         vm.stopBroadcast();
-    }
+    }   
     
     function _logResults() internal view {
         console2.log("=== Post-Transaction Token Balances ===");
+        console2.log("currency0: ", Currency.unwrap(currency0));
+        console2.log("currency1: ", Currency.unwrap(currency1));
+
         uint256 balance0After = IERC20(Currency.unwrap(currency0)).balanceOf(deployerAddress);
         uint256 balance1After = IERC20(Currency.unwrap(currency1)).balanceOf(deployerAddress);
-        console2.log("USDC Balance After:", balance0After);
-        console2.log("MUSD Balance After:", balance1After);
+        console2.log("deployer's USDC Balance After:", balance0After);
+        console2.log("deployer's MUSD Balance After:", balance1After);
         console2.log("");
 
         console2.log("=== Pool Creation Complete! ===");

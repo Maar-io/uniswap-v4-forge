@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {Script, console} from "forge-std/Script.sol";
+import {Script, console2} from "forge-std/Script.sol";
 import {IERC20} from "forge-std/interfaces/IERC20.sol";
 
 import {IHooks} from "@uniswap/v4-core/src/interfaces/IHooks.sol";
@@ -14,19 +14,16 @@ import {LocalAddresses} from "./localAddresses.s.sol";
 import {MyToken} from "../../src/MyToken.sol";
 
 /// @notice Shared configuration between scripts
-contract BaseLocalhostScript is Script, LocalAddresses{
+contract BaseLocalhostScript is Script, LocalAddresses {
     IERC20 internal tokenMUSD;
 
     /////////////////////////////////////
 
     Currency internal currency0;
-    Currency internal currency1; 
+    Currency internal currency1;
 
     constructor() {
         deployerAddress = getDeployer();
-
-        tokenMUSD = deployToken("MUSD", "MUSD", 6, 100_000 * 10 ** 6);
-        (currency0, currency1) = getCurrencies(address(tokenUSDC), address(tokenMUSD));
 
         vm.label(address(tokenETH), "TokenETH");
         vm.label(address(tokenUSDC), "TokenUSDC");
@@ -37,25 +34,40 @@ contract BaseLocalhostScript is Script, LocalAddresses{
         vm.label(address(hookContract), "HookContract");
     }
 
-    function fundTestAccountWithUSDC() public {
-        vm.startPrank(usdcWhale);
-        tokenUSDC.transfer(deployerAddress, 1_000_000e6); // Transfer 1,000,000 USDC (6 decimals)
-        vm.stopPrank();
-    }
-
-    function deployToken(string memory name, string memory symbol, uint8 decimals, uint256 mintAmount) public returns (IERC20) {
+    function deployToken(
+        string memory name,
+        string memory symbol,
+        uint8 decimals,
+        uint256 mintAmount
+    ) public returns (IERC20) {
         MyToken token = new MyToken(name, symbol, decimals, mintAmount);
+        console2.log("Token contract deployed at:", address(token));
+
         token.mint(deployerAddress, mintAmount);
+        console2.log("Minted", mintAmount, "tokens to", deployerAddress);
+
+        uint256 balance = token.balanceOf(deployerAddress);
+        console2.log("Deployer balance after mint:", balance);
+        console2.log(name, "token deployed at:", address(token));
         return IERC20(address(token));
     }
-    
-    function getCurrencies(address token0, address token1) public pure returns (Currency, Currency) {
+
+    function getCurrencies(
+        address token0,
+        address token1
+    ) public pure returns (Currency, Currency) {
         require(address(token0) != address(token1));
 
         if (token0 < token1) {
-            return (Currency.wrap(address(token0)), Currency.wrap(address(token1)));
+            return (
+                Currency.wrap(address(token0)),
+                Currency.wrap(address(token1))
+            );
         } else {
-            return (Currency.wrap(address(token1)), Currency.wrap(address(token0)));
+            return (
+                Currency.wrap(address(token1)),
+                Currency.wrap(address(token0))
+            );
         }
     }
 
@@ -65,7 +77,7 @@ contract BaseLocalhostScript is Script, LocalAddresses{
     //     require(wallets.length > 0, "No wallets found");
     //     console.log("Using Deployer wallet: %s", wallets[0]);
 
-    //     return wallets[0];  
+    //     return wallets[0];
     // }
 
     function getDeployer() public pure returns (address) {
