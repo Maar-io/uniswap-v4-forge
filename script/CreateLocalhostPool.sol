@@ -10,12 +10,14 @@ import {Actions} from "@uniswap/v4-periphery/src/libraries/Actions.sol";
 import {LiquidityAmounts} from "@uniswap/v4-core/test/utils/LiquidityAmounts.sol";
 import {TickMath} from "@uniswap/v4-core/src/libraries/TickMath.sol";
 
-import {BaseLocalhostScript} from "./base/BaseLocalhostScript.s.sol";
-import {LiquidityLocalhostHelpers} from "./base/LiquidityLocalhostHelpers.s.sol";
+import {LocalhostHelpers} from "./base/LocalhostHelpers.s.sol";
 
-contract CreateLocalhostPoolScript is BaseLocalhostScript, LiquidityLocalhostHelpers {
+contract CreateLocalhostPoolScript is LocalhostHelpers {
     using CurrencyLibrary for Currency;
 
+    IERC20 internal tokenMUSD;
+    Currency internal currency0;
+    Currency internal currency1;
     uint160 startingStablePrice = 2 ** 96; // 1:1 starting price
 
     // --- liquidity position configuration --- //
@@ -24,9 +26,20 @@ contract CreateLocalhostPoolScript is BaseLocalhostScript, LiquidityLocalhostHel
 
     // range of the position, must be a multiple of tickSpacing
     uint24 lpFee = 500;        
-    int24 tickSpacing = 100;    
+    int24 tickSpacing = 100;  
     int24 tickLower;
-    int24 tickUpper;
+    int24 tickUpper;  
+
+    constructor() {
+        deployerAddress = getDeployer();
+
+        vm.label(address(tokenETH), "TokenETH");
+        vm.label(address(tokenUSDC), "TokenUSDC");
+        vm.label(address(deployerAddress), "Deployer");
+        vm.label(address(poolManager), "PoolManager");
+        vm.label(address(positionManager), "PositionManager");
+        vm.label(address(hookContract), "HookContract");
+    }
 
     function run() external {
         _logInitialInfo();
@@ -42,12 +55,12 @@ contract CreateLocalhostPoolScript is BaseLocalhostScript, LiquidityLocalhostHel
         _checkTokenBalance(address(tokenMUSD), tokenMUSDAmount, "MUSD");
 
         // Create pool key
-        PoolKey memory poolKey = _createPoolKey();
-        _logPoolConfig(poolKey);
+        PoolKey memory poolKey = _createPoolKey(currency0, currency1, lpFee, tickSpacing);
+        _logPoolConfig(poolKey, startingStablePrice);
         
         // Calculate ticks based on the starting price
-        _calculateTicks();
-        
+        (tickLower, tickUpper) = _calculateTicks(tickSpacing, startingStablePrice);
+
         // Prepare liquidity mint parameters
         (bytes memory actions, bytes[] memory mintParams) = _prepareMintParams(poolKey, startingStablePrice, tokenUSDCAmount, tokenMUSDAmount);
 
@@ -57,63 +70,16 @@ contract CreateLocalhostPoolScript is BaseLocalhostScript, LiquidityLocalhostHel
         _executeTransaction(params, tokenUSDCAmount);
         _logResults();
     }
-
+    
     function _deployMUSDToken() internal {
         vm.startBroadcast(deployerAddress);
         tokenMUSD = deployToken("MUSD", "MUSD", 6, 1_000_000 * 10 ** 6);
         vm.stopBroadcast();
-        
+
         console2.log("MUSD token broadcasted:", address(tokenMUSD));
-    }
-    
-    function _logInitialInfo() internal view {
-        console2.log("=== Starting Pool Creation and Liquidity Addition ===");
-        console2.log("Chain ID:", block.chainid);
-        console2.log("Deployer Address:", deployerAddress);
-        console2.log("");
-    }
-    
-    function _checkTokenBalance(address token, uint256 amount, string memory name) internal view {
-        uint256 balance = IERC20(token).balanceOf(deployerAddress);
-
-        console2.log(name,"Balance:", balance);
-        console2.log("Deployer has enough ", name, "? : ", balance >= amount);
-        console2.log("");
-    }
-    
-    function _createPoolKey() internal view returns (PoolKey memory) {
-       return PoolKey({
-            currency0: currency0,
-            currency1: currency1,
-            fee: lpFee,
-            tickSpacing: tickSpacing,
-            hooks: hookContract
-        });
+        vm.label(address(tokenMUSD), "TokenMUSD");
     }
 
-    function _logPoolConfig(PoolKey memory poolKey) internal view {
-        console2.log("=== Pool Configuration ===");
-        console2.log("Fee:", poolKey.fee);
-        console2.log("Tick Spacing:", uint256(int256(poolKey.tickSpacing)));
-        console2.log("Starting Price (sqrtPriceX96):", startingStablePrice);
-        console2.log("Hooks Contract:", address(poolKey.hooks));
-        console2.log("");
-    }
-    
-    function _calculateTicks() internal {
-        int24 currentTick = TickMath.getTickAtSqrtPrice(startingStablePrice);
-        console2.log("=== Tick Calculations ===");
-        console2.log("Current Tick (from starting price):", int256(currentTick));
-
-        tickLower = ((currentTick - 5000 * tickSpacing) / tickSpacing) * tickSpacing;
-        tickUpper = ((currentTick + 5000 * tickSpacing) / tickSpacing) * tickSpacing;
-        
-        console2.log("Tick Lower:", int256(tickLower));
-        console2.log("Tick Upper:", int256(tickUpper));
-        console2.log("Tick Range:", int256(tickUpper - tickLower));
-        console2.log("");
-    }
-    
     function _prepareMintParams(PoolKey memory poolKey, uint160 price, uint256 amount0, uint256 amount1) internal view returns (bytes memory, bytes[] memory) {
         uint128 liquidity = LiquidityAmounts.getLiquidityForAmounts(
             price,
