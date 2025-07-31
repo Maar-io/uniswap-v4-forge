@@ -38,14 +38,14 @@ contract BaseScript is Script {
 
     Currency immutable currency0;
     Currency immutable currency1;
-    uint24 lpFee = 500;        
-    int24 tickSpacing = 100;     
+    uint24 lpFee = 500;
+    int24 tickSpacing = 100;
 
     constructor() {
         // Use hookmate for Pool Manager and Position Manager (these work)
         poolManager = IPoolManager(AddressConstants.getPoolManagerAddress(block.chainid));
         positionManager = IPositionManager(payable(AddressConstants.getPositionManagerAddress(block.chainid)));
-        
+
         // Handle swap router with fallback for Base Sepolia
         address swapRouterAddr;
 
@@ -88,6 +88,6 @@ contract BaseScript is Script {
         require(wallets.length > 0, "No wallets found");
         console.log("Using Deployer wallet: %s", wallets[0]);
 
-        return wallets[0];  
+        return wallets[0];
     }
 }

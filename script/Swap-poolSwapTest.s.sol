@@ -10,7 +10,6 @@ import {CurrencyLibrary, Currency} from "@uniswap/v4-core/src/types/Currency.sol
 import {BaseScript} from "./base/BaseScript.s.sol";
 import {TickMath} from "@uniswap/v4-core/src/libraries/TickMath.sol";
 
-
 interface IPoolManager {
     struct SwapParams {
         bool zeroForOne;
@@ -74,20 +73,12 @@ contract SwapScript is BaseScript {
             amountSpecified: int256(1e5),
             sqrtPriceLimitX96: 4295128740 // MIN_SQRT_PRICE + 1
         });
-        TestSettings memory testSettings = TestSettings({
-            takeClaims: false,
-            settleUsingBurn: false
-        });
+        TestSettings memory testSettings = TestSettings({takeClaims: false, settleUsingBurn: false});
         bytes memory hookData = new bytes(0);
 
         // Swap: MUSD (currency1) -> USDC (currency0)
         console2.log("Executing PoolSwapTest swap...");
-        int256 delta = IPoolSwapTest(poolSwapTest).swap(
-            poolKey,
-            params,
-            testSettings,
-            hookData
-        );
+        int256 delta = IPoolSwapTest(poolSwapTest).swap(poolKey, params, testSettings, hookData);
         console2.log("Swap completed! Delta:", delta);
 
         // Check balances AFTER swap

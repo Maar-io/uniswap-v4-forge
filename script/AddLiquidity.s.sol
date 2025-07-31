@@ -52,19 +52,9 @@ contract AddLiquidity is BaseScript, LiquidityHelpers {
         uint256 amount1Max = token1Amount + 1;
         bytes memory hookData = new bytes(0);
 
-        (
-            bytes memory actions,
-            bytes[] memory mintParams
-        ) = _mintLiquidityParams(
-                poolKey,
-                tickLower,
-                tickUpper,
-                liquidity,
-                amount0Max,
-                amount1Max,
-                deployerAddress,
-                hookData
-            );
+        (bytes memory actions, bytes[] memory mintParams) = _mintLiquidityParams(
+            poolKey, tickLower, tickUpper, liquidity, amount0Max, amount1Max, deployerAddress, hookData
+        );
 
         console2.log("=== Executing Liquidity Addition ===");
 
@@ -79,10 +69,7 @@ contract AddLiquidity is BaseScript, LiquidityHelpers {
         console2.log("Amount1 (MUSD):", token1Amount);
 
         // Only add liquidity (no pool initialization)
-        positionManager.modifyLiquidities(
-            abi.encode(actions, mintParams),
-            block.timestamp + 3600
-        );
+        positionManager.modifyLiquidities(abi.encode(actions, mintParams), block.timestamp + 3600);
         uint256 usdcAfter = token0.balanceOf(deployerAddress);
         uint256 musdAfter = token1.balanceOf(deployerAddress);
         console2.log("USDC After:", usdcAfter);

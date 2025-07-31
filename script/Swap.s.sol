@@ -22,7 +22,7 @@ contract SwapScript is BaseScript {
 
         // Use UniversalRouter v4
         address universalRouter04 = 0x3A9D48AB9751398BbFa63ad67599Bb04e4BdF98b; // UR on Sepolia
-        
+
         // We'll approve both, just for testing.
         token1.approve(address(swapRouter), type(uint256).max);
         token0.approve(address(swapRouter), type(uint256).max);
@@ -31,7 +31,7 @@ contract SwapScript is BaseScript {
         console2.log("Using timestamp:", block.timestamp);
         swapRouter.swapExactTokensForTokens({
             amountIn: 1e6,
-            amountOutMin: 0, 
+            amountOutMin: 0,
             zeroForOne: false,
             poolKey: poolKey,
             hookData: hookData,
