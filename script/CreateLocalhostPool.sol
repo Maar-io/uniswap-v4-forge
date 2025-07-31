@@ -31,12 +31,12 @@ contract CreateLocalhostPoolScript is LocalhostHelpers {
     uint256 public tokenMUSDAmount2 = 35000e6; // 35000 MUSD
 
     // range of the position, must be a multiple of tickSpacing
-    uint24 lpFee = 500;        
-    int24 tickSpacing = 10;  
-    uint24 lpFee2 = 500;        
-    int24 tickSpacing2 = 100;  
+    uint24 lpFee = 500;
+    int24 tickSpacing = 10;
+    uint24 lpFee2 = 500;
+    int24 tickSpacing2 = 100;
     int24 tickLower;
-    int24 tickUpper;  
+    int24 tickUpper;
 
     constructor() {
         deployerAddress = getDeployer();
@@ -61,7 +61,6 @@ contract CreateLocalhostPoolScript is LocalhostHelpers {
     }
 
     function createPoolUsdcMusd() internal {
-        
         // Set up currencies
         (currency0, currency1) = getCurrencies(address(tokenUSDC), address(tokenMUSD));
 
@@ -72,12 +71,13 @@ contract CreateLocalhostPoolScript is LocalhostHelpers {
         // Create pool key
         PoolKey memory poolKey = _createPoolKey(currency0, currency1, lpFee, tickSpacing);
         _logPoolConfig(poolKey, startingStablePrice);
-        
+
         // Calculate ticks based on the starting price
         (tickLower, tickUpper) = _calculateTicks(tickSpacing, startingStablePrice);
 
         // Prepare liquidity mint parameters
-        (bytes memory actions, bytes[] memory mintParams) = _prepareMintParams(poolKey, startingStablePrice, tokenUSDCAmount, tokenMUSDAmount);
+        (bytes memory actions, bytes[] memory mintParams) =
+            _prepareMintParams(poolKey, startingStablePrice, tokenUSDCAmount, tokenMUSDAmount);
 
         // Prepare multicall parameters for Pool creation and liquidity addition
         bytes[] memory params = _prepareMulticallParams(actions, mintParams, poolKey, startingStablePrice);
@@ -87,7 +87,6 @@ contract CreateLocalhostPoolScript is LocalhostHelpers {
     }
 
     function createPoolMusdETH() internal {
-        
         // Set up currencies
         (currency0, currency1) = getCurrencies(address(tokenETH), address(tokenMUSD));
 
@@ -98,12 +97,13 @@ contract CreateLocalhostPoolScript is LocalhostHelpers {
         // Create pool key
         PoolKey memory poolKey = _createPoolKey(currency0, currency1, lpFee2, tickSpacing2);
         _logPoolConfig(poolKey, startingETHpoolPrice);
-        
+
         // Calculate ticks based on the starting price
         (tickLower, tickUpper) = _calculateTicks(tickSpacing2, startingETHpoolPrice);
 
         // Prepare liquidity mint parameters
-        (bytes memory actions, bytes[] memory mintParams) = _prepareMintParams(poolKey, startingETHpoolPrice, tokenETHAmount, tokenMUSDAmount2);
+        (bytes memory actions, bytes[] memory mintParams) =
+            _prepareMintParams(poolKey, startingETHpoolPrice, tokenETHAmount, tokenMUSDAmount2);
 
         // Prepare multicall parameters for Pool creation and liquidity addition
         bytes[] memory params = _prepareMulticallParams(actions, mintParams, poolKey, startingETHpoolPrice);
@@ -111,7 +111,7 @@ contract CreateLocalhostPoolScript is LocalhostHelpers {
         _executeTransaction(params, tokenETHAmount);
         _logResults(tokenETH, tokenMUSD, "ETH-MUSD");
     }
-    
+
     function _deployMUSDToken() internal {
         vm.startBroadcast(deployerAddress);
         tokenMUSD = deployToken("MUSD", "MUSD", 6, 1_000_000 * 10 ** 6);
@@ -121,13 +121,13 @@ contract CreateLocalhostPoolScript is LocalhostHelpers {
         vm.label(address(tokenMUSD), "TokenMUSD");
     }
 
-    function _prepareMintParams(PoolKey memory poolKey, uint160 price, uint256 amount0, uint256 amount1) internal view returns (bytes memory, bytes[] memory) {
+    function _prepareMintParams(PoolKey memory poolKey, uint160 price, uint256 amount0, uint256 amount1)
+        internal
+        view
+        returns (bytes memory, bytes[] memory)
+    {
         uint128 liquidity = LiquidityAmounts.getLiquidityForAmounts(
-            price,
-            TickMath.getSqrtPriceAtTick(tickLower),
-            TickMath.getSqrtPriceAtTick(tickUpper),
-            amount0,
-            amount1
+            price, TickMath.getSqrtPriceAtTick(tickLower), TickMath.getSqrtPriceAtTick(tickUpper), amount0, amount1
         );
 
         console2.log("=== Liquidity Calculations ===");
@@ -142,10 +142,10 @@ contract CreateLocalhostPoolScript is LocalhostHelpers {
             poolKey, tickLower, tickUpper, liquidity, amount0Max, amount1Max, deployerAddress, hookData
         );
     }
-    
+
     function _prepareMulticallParams(
-        bytes memory actions, 
-        bytes[] memory mintParams, 
+        bytes memory actions,
+        bytes[] memory mintParams,
         PoolKey memory poolKey,
         uint256 price
     ) internal view returns (bytes[] memory) {
@@ -160,17 +160,17 @@ contract CreateLocalhostPoolScript is LocalhostHelpers {
         console2.log("=== Multicall Parameters Prepared ===");
         console2.log("Param count:", params.length);
         console2.log("");
-        
+
         return params;
     }
-    
+
     function _executeTransaction(bytes[] memory params, uint256 amount0) internal {
         uint256 valueToPass = currency0.isAddressZero() ? (amount0 + 1) : 0;
 
         console2.log("=== Starting Transaction ===");
         console2.log("Position Manager:", address(positionManager));
-        
-        vm.startBroadcast(deployerAddress);        
+
+        vm.startBroadcast(deployerAddress);
         console2.log("Broadcasting transaction...");
         tokenApprovals(tokenUSDC, tokenMUSD);
 
@@ -181,25 +181,19 @@ contract CreateLocalhostPoolScript is LocalhostHelpers {
             console2.log("Multicall failed:", reason);
             // Don't revert - the failure might be expected (e.g., pool already exists)
         }
-        
+
         vm.stopBroadcast();
-    }   
-    
-    function _logResults(
-        IERC20 token0,
-        IERC20 token1,
-        string memory poolName
-    ) internal view {
+    }
+
+    function _logResults(IERC20 token0, IERC20 token1, string memory poolName) internal view {
         console2.log("=== Post-Transaction Token Balances ===");
         console2.log("token0: ", address(token0));
         console2.log("token1: ", address(token1));
 
-        uint256 balance0After = address(token0) == address(0)
-            ? deployerAddress.balance
-            : IERC20(token0).balanceOf(deployerAddress);
-        uint256 balance1After = address(token1) == address(0)
-            ? deployerAddress.balance
-            : IERC20(token1).balanceOf(deployerAddress);
+        uint256 balance0After =
+            address(token0) == address(0) ? deployerAddress.balance : IERC20(token0).balanceOf(deployerAddress);
+        uint256 balance1After =
+            address(token1) == address(0) ? deployerAddress.balance : IERC20(token1).balanceOf(deployerAddress);
         console2.log("deployer's USDC Balance After:", balance0After);
         console2.log("deployer's MUSD Balance After:", balance1After);
         console2.log("");

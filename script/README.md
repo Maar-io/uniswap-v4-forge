@@ -39,7 +39,10 @@ cast call $USDC_ADDRESS \
 ```
 
 
-## Run script to deploy test token MUSD and create pool MUSD/USDC
+## Run script to deploy test token MUSD and create pools
+* MUSD/USDC
+* MUSD/ETH
+
 ```shell
 forge script script/CreateLocalhostPool.sol:CreateLocalhostPoolScript --rpc-url $RPC_URL --broadcast --unlocked
 ```
@@ -66,3 +69,7 @@ pnpm run dev
      - Private Key: `0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80`
      - Account address: `0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266`
      - This account has enough ETH, USDC and MUSD if you followed previous steps.
+  
+## Verify MUSD token contract address
+Make sure that the MUSD token contract address is set in your frontend application. 
+After running forge script, the MUSD token address should be `0x9A9f2CCfdE556A7E9Ff0848998Aa4a0CFD8863AE`. If it is not, copy the address from the script output and set MUSDC address in your frontend application in `lib/uniswap/constants.ts` file.

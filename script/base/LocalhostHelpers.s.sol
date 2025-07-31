@@ -29,23 +29,11 @@ contract LocalhostHelpers is Script, LocalAddresses {
         bytes memory hookData
     ) internal pure returns (bytes memory, bytes[] memory) {
         bytes memory actions = abi.encodePacked(
-            uint8(Actions.MINT_POSITION),
-            uint8(Actions.SETTLE_PAIR),
-            uint8(Actions.SWEEP),
-            uint8(Actions.SWEEP)
+            uint8(Actions.MINT_POSITION), uint8(Actions.SETTLE_PAIR), uint8(Actions.SWEEP), uint8(Actions.SWEEP)
         );
 
         bytes[] memory params = new bytes[](4);
-        params[0] = abi.encode(
-            poolKey,
-            _tickLower,
-            _tickUpper,
-            liquidity,
-            amount0Max,
-            amount1Max,
-            recipient,
-            hookData
-        );
+        params[0] = abi.encode(poolKey, _tickLower, _tickUpper, liquidity, amount0Max, amount1Max, recipient, hookData);
         params[1] = abi.encode(poolKey.currency0, poolKey.currency1);
         params[2] = abi.encode(poolKey.currency0, recipient);
         params[3] = abi.encode(poolKey.currency1, recipient);
@@ -57,22 +45,12 @@ contract LocalhostHelpers is Script, LocalAddresses {
         // Only approve ERC20 tokens, skip native ETH (address(0))
         if (address(token0) != address(0)) {
             token0.approve(address(permit2), type(uint256).max);
-            permit2.approve(
-                address(token0),
-                address(positionManager),
-                type(uint160).max,
-                type(uint48).max
-            );
+            permit2.approve(address(token0), address(positionManager), type(uint160).max, type(uint48).max);
         }
 
         if (address(token1) != address(0)) {
             token1.approve(address(permit2), type(uint256).max);
-            permit2.approve(
-                address(token1),
-                address(positionManager),
-                type(uint160).max,
-                type(uint48).max
-            );
+            permit2.approve(address(token1), address(positionManager), type(uint160).max, type(uint48).max);
         }
 
         console2.log("Token approvals completed");
@@ -85,29 +63,22 @@ contract LocalhostHelpers is Script, LocalAddresses {
         console2.log("");
     }
 
-    function _checkTokenBalance(
-        address token,
-        uint256 amount,
-        string memory name
-    ) internal view {
-        uint256 balance = address(token) == address(0)
-            ? deployerAddress.balance
-            : IERC20(token).balanceOf(deployerAddress);
+    function _checkTokenBalance(address token, uint256 amount, string memory name) internal view {
+        uint256 balance =
+            address(token) == address(0) ? deployerAddress.balance : IERC20(token).balanceOf(deployerAddress);
 
         console2.log(name, "Balance:", balance);
         console2.log("Deployer has enough ", name, "? : ", balance >= amount);
         console2.log("");
     }
 
-    function _createPoolKey(Currency currency0, Currency currency1, uint24 fee, int24 spacing) internal pure returns (PoolKey memory) {
+    function _createPoolKey(Currency currency0, Currency currency1, uint24 fee, int24 spacing)
+        internal
+        pure
+        returns (PoolKey memory)
+    {
         return
-            PoolKey({
-                currency0: currency0,
-                currency1: currency1,
-                fee: fee,
-                tickSpacing: spacing,
-                hooks: hookContract
-            });
+            PoolKey({currency0: currency0, currency1: currency1, fee: fee, tickSpacing: spacing, hooks: hookContract});
     }
 
     function _logPoolConfig(PoolKey memory poolKey, uint160 price) internal pure {
@@ -122,17 +93,10 @@ contract LocalhostHelpers is Script, LocalAddresses {
     function _calculateTicks(int24 spacing, uint160 startPrice) internal pure returns (int24, int24) {
         int24 currentTick = TickMath.getTickAtSqrtPrice(startPrice);
         console2.log("=== Tick Calculations ===");
-        console2.log(
-            "Current Tick (from starting price):",
-            int256(currentTick)
-        );
+        console2.log("Current Tick (from starting price):", int256(currentTick));
 
-        int24 tickL =
-            ((currentTick - 5000 * spacing) / spacing) *
-            spacing;
-        int24 tickU =
-            ((currentTick + 5000 * spacing) / spacing) *
-            spacing;
+        int24 tickL = ((currentTick - 5000 * spacing) / spacing) * spacing;
+        int24 tickU = ((currentTick + 5000 * spacing) / spacing) * spacing;
 
         console2.log("Tick Lower:", int256(tickL));
         console2.log("Tick Upper:", int256(tickU));
@@ -141,33 +105,22 @@ contract LocalhostHelpers is Script, LocalAddresses {
         return (tickL, tickU);
     }
 
-    function deployToken(
-        string memory name,
-        string memory symbol,
-        uint8 decimals,
-        uint256 mintAmount
-    ) public returns (IERC20) {
+    function deployToken(string memory name, string memory symbol, uint8 decimals, uint256 mintAmount)
+        public
+        returns (IERC20)
+    {
         MyToken token = new MyToken(name, symbol, decimals, mintAmount);
         console2.log("Token contract deployed at:", address(token));
         return IERC20(address(token));
     }
 
-    function getCurrencies(
-        address token0,
-        address token1
-    ) public pure returns (Currency, Currency) {
+    function getCurrencies(address token0, address token1) public pure returns (Currency, Currency) {
         require(address(token0) != address(token1));
 
         if (token0 < token1) {
-            return (
-                Currency.wrap(address(token0)),
-                Currency.wrap(address(token1))
-            );
+            return (Currency.wrap(address(token0)), Currency.wrap(address(token1)));
         } else {
-            return (
-                Currency.wrap(address(token1)),
-                Currency.wrap(address(token0))
-            );
+            return (Currency.wrap(address(token1)), Currency.wrap(address(token0)));
         }
     }
 

@@ -34,19 +34,19 @@ contract CreatePoolAndAddLiquidityScript is BaseScript, LiquidityHelpers {
     function run() external {
         _logInitialInfo();
         _checkBalances();
-        
+
         PoolKey memory poolKey = _createPoolKey();
         _logPoolConfig(poolKey);
-        
+
         _calculateTicks();
-        
+
         (bytes memory actions, bytes[] memory mintParams) = _prepareMintParams(poolKey);
         bytes[] memory params = _prepareMulticallParams(actions, mintParams, poolKey);
-        
+
         _executeTransaction(params);
         _logResults();
     }
-    
+
     function _logInitialInfo() internal view {
         console2.log("=== Starting Pool Creation and Liquidity Addition ===");
         console2.log("Chain ID:", block.chainid);
@@ -60,7 +60,7 @@ contract CreatePoolAndAddLiquidityScript is BaseScript, LiquidityHelpers {
         console2.log("Token1 Amount:", token1Amount);
         console2.log("");
     }
-    
+
     function _checkBalances() internal view {
         console2.log("=== Pre-Transaction Token Balances ===");
         uint256 balance0 = IERC20(Currency.unwrap(currency0)).balanceOf(deployerAddress);
@@ -71,9 +71,9 @@ contract CreatePoolAndAddLiquidityScript is BaseScript, LiquidityHelpers {
         console2.log("Has enough MUSD?", balance1 >= token1Amount);
         console2.log("");
     }
-    
+
     function _createPoolKey() internal view returns (PoolKey memory) {
-       return PoolKey({
+        return PoolKey({
             currency0: currency0,
             currency1: currency1,
             fee: lpFee,
@@ -90,7 +90,7 @@ contract CreatePoolAndAddLiquidityScript is BaseScript, LiquidityHelpers {
         console2.log("Hooks Contract:", address(poolKey.hooks));
         console2.log("");
     }
-    
+
     function _calculateTicks() internal {
         int24 currentTick = TickMath.getTickAtSqrtPrice(startingPrice);
         console2.log("=== Tick Calculations ===");
@@ -98,13 +98,13 @@ contract CreatePoolAndAddLiquidityScript is BaseScript, LiquidityHelpers {
 
         tickLower = ((currentTick - 5000 * tickSpacing) / tickSpacing) * tickSpacing;
         tickUpper = ((currentTick + 5000 * tickSpacing) / tickSpacing) * tickSpacing;
-        
+
         console2.log("Tick Lower:", int256(tickLower));
         console2.log("Tick Upper:", int256(tickUpper));
         console2.log("Tick Range:", int256(tickUpper - tickLower));
         console2.log("");
     }
-    
+
     function _prepareMintParams(PoolKey memory poolKey) internal view returns (bytes memory, bytes[] memory) {
         uint128 liquidity = LiquidityAmounts.getLiquidityForAmounts(
             startingPrice,
@@ -126,12 +126,12 @@ contract CreatePoolAndAddLiquidityScript is BaseScript, LiquidityHelpers {
             poolKey, tickLower, tickUpper, liquidity, amount0Max, amount1Max, deployerAddress, hookData
         );
     }
-    
-    function _prepareMulticallParams(
-        bytes memory actions, 
-        bytes[] memory mintParams, 
-        PoolKey memory poolKey
-    ) internal view returns (bytes[] memory) {
+
+    function _prepareMulticallParams(bytes memory actions, bytes[] memory mintParams, PoolKey memory poolKey)
+        internal
+        view
+        returns (bytes[] memory)
+    {
         bytes[] memory params = new bytes[](2);
         bytes memory hookData = new bytes(0);
 
@@ -143,18 +143,18 @@ contract CreatePoolAndAddLiquidityScript is BaseScript, LiquidityHelpers {
         console2.log("=== Multicall Parameters Prepared ===");
         console2.log("Param count:", params.length);
         console2.log("");
-        
+
         return params;
     }
-    
+
     function _executeTransaction(bytes[] memory params) internal {
         uint256 valueToPass = currency0.isAddressZero() ? (token0Amount + 1) : 0;
-        
+
         console2.log("=== Starting Transaction ===");
         console2.log("Position Manager:", address(positionManager));
-        
+
         vm.startBroadcast();
-        
+
         console2.log("Broadcasting transaction...");
         tokenApprovals();
         console2.log("Token approvals completed");
@@ -162,10 +162,10 @@ contract CreatePoolAndAddLiquidityScript is BaseScript, LiquidityHelpers {
         console2.log("Executing multicall...");
         positionManager.multicall{value: valueToPass}(params);
         console2.log("Multicall completed successfully!");
-        
+
         vm.stopBroadcast();
     }
-    
+
     function _logResults() internal view {
         console2.log("=== Post-Transaction Token Balances ===");
         uint256 balance0After = IERC20(Currency.unwrap(currency0)).balanceOf(deployerAddress);

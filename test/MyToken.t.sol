@@ -15,5 +15,4 @@ contract MusdTest is Test {
         token.mint(address(this), 100);
         assertEq(token.balanceOf(address(this)), 100);
     }
-    
 }

@@ -28,7 +28,7 @@ contract SwapScript is BaseScript {
         console2.log("Using timestamp:", block.timestamp);
         swapRouter.swapExactTokensForTokens({
             amountIn: 1e6,
-            amountOutMin: 0, 
+            amountOutMin: 0,
             zeroForOne: false,
             poolKey: poolKey,
             hookData: hookData,
