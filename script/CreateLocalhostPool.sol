@@ -18,15 +18,23 @@ contract CreateLocalhostPoolScript is LocalhostHelpers {
     IERC20 internal tokenMUSD;
     Currency internal currency0;
     Currency internal currency1;
+    Currency internal currency2;
+    Currency internal currency3;
     uint160 startingStablePrice = 2 ** 96; // 1:1 starting price
+    uint160 startingETHpoolPrice = 1873855042454260090959041; // Precomputed: sqrtPriceX96 = uint160(sqrt(3500 * 1e18 / 1e6) * 2**96)
 
     // --- liquidity position configuration --- //
     uint256 public tokenUSDCAmount = 1000e6;
     uint256 public tokenMUSDAmount = 1000e6;
 
+    uint256 public tokenETHAmount = 10e18; // 10 ETH
+    uint256 public tokenMUSDAmount2 = 35000e6; // 35000 MUSD
+
     // range of the position, must be a multiple of tickSpacing
     uint24 lpFee = 500;        
-    int24 tickSpacing = 100;  
+    int24 tickSpacing = 10;  
+    uint24 lpFee2 = 500;        
+    int24 tickSpacing2 = 100;  
     int24 tickLower;
     int24 tickUpper;  
 
@@ -47,6 +55,13 @@ contract CreateLocalhostPoolScript is LocalhostHelpers {
         // Deploy MUSD token
         _deployMUSDToken();
 
+        createPoolUsdcMusd();
+
+        createPoolMusdETH();
+    }
+
+    function createPoolUsdcMusd() internal {
+        
         // Set up currencies
         (currency0, currency1) = getCurrencies(address(tokenUSDC), address(tokenMUSD));
 
@@ -66,9 +81,35 @@ contract CreateLocalhostPoolScript is LocalhostHelpers {
 
         // Prepare multicall parameters for Pool creation and liquidity addition
         bytes[] memory params = _prepareMulticallParams(actions, mintParams, poolKey, startingStablePrice);
-        
+
         _executeTransaction(params, tokenUSDCAmount);
-        _logResults();
+        _logResults(tokenUSDC, tokenMUSD, "USDC-MUSD");
+    }
+
+    function createPoolMusdETH() internal {
+        
+        // Set up currencies
+        (currency0, currency1) = getCurrencies(address(tokenETH), address(tokenMUSD));
+
+        // Check balances before creating the pool
+        _checkTokenBalance(address(tokenETH), tokenETHAmount, "ETH");
+        _checkTokenBalance(address(tokenMUSD), tokenMUSDAmount, "MUSD");
+
+        // Create pool key
+        PoolKey memory poolKey = _createPoolKey(currency0, currency1, lpFee2, tickSpacing2);
+        _logPoolConfig(poolKey, startingETHpoolPrice);
+        
+        // Calculate ticks based on the starting price
+        (tickLower, tickUpper) = _calculateTicks(tickSpacing2, startingETHpoolPrice);
+
+        // Prepare liquidity mint parameters
+        (bytes memory actions, bytes[] memory mintParams) = _prepareMintParams(poolKey, startingETHpoolPrice, tokenETHAmount, tokenMUSDAmount2);
+
+        // Prepare multicall parameters for Pool creation and liquidity addition
+        bytes[] memory params = _prepareMulticallParams(actions, mintParams, poolKey, startingETHpoolPrice);
+
+        _executeTransaction(params, tokenETHAmount);
+        _logResults(tokenETH, tokenMUSD, "ETH-MUSD");
     }
     
     function _deployMUSDToken() internal {
@@ -144,18 +185,26 @@ contract CreateLocalhostPoolScript is LocalhostHelpers {
         vm.stopBroadcast();
     }   
     
-    function _logResults() internal view {
+    function _logResults(
+        IERC20 token0,
+        IERC20 token1,
+        string memory poolName
+    ) internal view {
         console2.log("=== Post-Transaction Token Balances ===");
-        console2.log("currency0: ", Currency.unwrap(currency0));
-        console2.log("currency1: ", Currency.unwrap(currency1));
+        console2.log("token0: ", address(token0));
+        console2.log("token1: ", address(token1));
 
-        uint256 balance0After = IERC20(Currency.unwrap(currency0)).balanceOf(deployerAddress);
-        uint256 balance1After = IERC20(Currency.unwrap(currency1)).balanceOf(deployerAddress);
+        uint256 balance0After = address(token0) == address(0)
+            ? deployerAddress.balance
+            : IERC20(token0).balanceOf(deployerAddress);
+        uint256 balance1After = address(token1) == address(0)
+            ? deployerAddress.balance
+            : IERC20(token1).balanceOf(deployerAddress);
         console2.log("deployer's USDC Balance After:", balance0After);
         console2.log("deployer's MUSD Balance After:", balance1After);
         console2.log("");
 
-        console2.log("=== Pool Creation Complete! ===");
+        console2.log("=== Pool", poolName, "Creation Complete! ===");
         console2.log(unicode"✅ Pool initialized");
         console2.log(unicode"✅ Liquidity position created");
         console2.log(unicode"✅ Pool ready for trading");

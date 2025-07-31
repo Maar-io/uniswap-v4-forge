@@ -90,7 +90,9 @@ contract LocalhostHelpers is Script, LocalAddresses {
         uint256 amount,
         string memory name
     ) internal view {
-        uint256 balance = IERC20(token).balanceOf(deployerAddress);
+        uint256 balance = address(token) == address(0)
+            ? deployerAddress.balance
+            : IERC20(token).balanceOf(deployerAddress);
 
         console2.log(name, "Balance:", balance);
         console2.log("Deployer has enough ", name, "? : ", balance >= amount);
@@ -137,7 +139,6 @@ contract LocalhostHelpers is Script, LocalAddresses {
         console2.log("Tick Range:", int256(tickU - tickL));
         console2.log("");
         return (tickL, tickU);
-
     }
 
     function deployToken(
