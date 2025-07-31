@@ -31,15 +31,12 @@ contract CreateLocalhostPoolScript is BaseLocalhostScript, LiquidityLocalhostHel
     function run() external {
         _logInitialInfo();
 
-        // 1. Deploy MUSD token first during broadcast
-        vm.startBroadcast(deployerAddress);
-        tokenMUSD = deployToken("MUSD", "MUSD", 6, 1_000_000 * 10 ** 6);
-        vm.stopBroadcast();
+        // Deploy MUSD token
+        _deployMUSDToken();
 
         // Set up currencies
         (currency0, currency1) = getCurrencies(address(tokenUSDC), address(tokenMUSD));
 
-        // 3. Create pool and add liquidity
         // Check balances before creating the pool
         _checkTokenBalance(address(tokenUSDC), tokenUSDCAmount, "USDC");
         _checkTokenBalance(address(tokenMUSD), tokenMUSDAmount, "MUSD");
@@ -53,19 +50,21 @@ contract CreateLocalhostPoolScript is BaseLocalhostScript, LiquidityLocalhostHel
         
         // Prepare liquidity mint parameters
         (bytes memory actions, bytes[] memory mintParams) = _prepareMintParams(poolKey, startingStablePrice, tokenUSDCAmount, tokenMUSDAmount);
+
+        // Prepare multicall parameters for Pool creation and liquidity addition
         bytes[] memory params = _prepareMulticallParams(actions, mintParams, poolKey, startingStablePrice);
         
         _executeTransaction(params, tokenUSDCAmount);
         _logResults();
     }
 
-    // function _deployMUSDToken() internal {
-    //     vm.startBroadcast(deployerAddress);
-    //     tokenMUSD = deployToken("MUSD", "MUSD", 6, 1_000_000 * 10 ** 6);
-    //     vm.stopBroadcast();
+    function _deployMUSDToken() internal {
+        vm.startBroadcast(deployerAddress);
+        tokenMUSD = deployToken("MUSD", "MUSD", 6, 1_000_000 * 10 ** 6);
+        vm.stopBroadcast();
         
-    //     console2.log("MUSD token deployed at:", address(tokenMUSD));
-    // }
+        console2.log("MUSD token broadcasted:", address(tokenMUSD));
+    }
     
     function _logInitialInfo() internal view {
         console2.log("=== Starting Pool Creation and Liquidity Addition ===");
@@ -76,13 +75,9 @@ contract CreateLocalhostPoolScript is BaseLocalhostScript, LiquidityLocalhostHel
     
     function _checkTokenBalance(address token, uint256 amount, string memory name) internal view {
         uint256 balance = IERC20(token).balanceOf(deployerAddress);
-        console2.log(name);
-        console2.log("Balance:");
-        console2.logUint(balance);
-        console2.log("User:");
-        console2.logAddress(deployerAddress);
 
-        console2.log("Has enough ", name, "? : ", balance >= amount);
+        console2.log(name,"Balance:", balance);
+        console2.log("Deployer has enough ", name, "? : ", balance >= amount);
         console2.log("");
     }
     
@@ -195,7 +190,7 @@ contract CreateLocalhostPoolScript is BaseLocalhostScript, LiquidityLocalhostHel
         console2.log("");
 
         console2.log("=== Pool Creation Complete! ===");
-        console2.log(unicode"✅ Pool initialized with 1:1 price ratio");
+        console2.log(unicode"✅ Pool initialized");
         console2.log(unicode"✅ Liquidity position created");
         console2.log(unicode"✅ Pool ready for trading");
     }

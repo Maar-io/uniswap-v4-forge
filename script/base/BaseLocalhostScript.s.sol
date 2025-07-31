@@ -16,9 +16,6 @@ import {MyToken} from "../../src/MyToken.sol";
 /// @notice Shared configuration between scripts
 contract BaseLocalhostScript is Script, LocalAddresses {
     IERC20 internal tokenMUSD;
-
-    /////////////////////////////////////
-
     Currency internal currency0;
     Currency internal currency1;
 
@@ -27,7 +24,7 @@ contract BaseLocalhostScript is Script, LocalAddresses {
 
         vm.label(address(tokenETH), "TokenETH");
         vm.label(address(tokenUSDC), "TokenUSDC");
-
+        vm.label(address(tokenMUSD), "TokenMUSD");
         vm.label(address(deployerAddress), "Deployer");
         vm.label(address(poolManager), "PoolManager");
         vm.label(address(positionManager), "PositionManager");
@@ -42,13 +39,6 @@ contract BaseLocalhostScript is Script, LocalAddresses {
     ) public returns (IERC20) {
         MyToken token = new MyToken(name, symbol, decimals, mintAmount);
         console2.log("Token contract deployed at:", address(token));
-
-        token.mint(deployerAddress, mintAmount);
-        console2.log("Minted", mintAmount, "tokens to", deployerAddress);
-
-        uint256 balance = token.balanceOf(deployerAddress);
-        console2.log("Deployer balance after mint:", balance);
-        console2.log(name, "token deployed at:", address(token));
         return IERC20(address(token));
     }
 
